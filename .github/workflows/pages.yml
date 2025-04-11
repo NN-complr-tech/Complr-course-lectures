@@ -1,0 +1,55 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libreoffice
+
+      - name: Convert PPTX to PDF
+        run: |
+          mkdir -p output
+          for f in *.pptx; do
+            libreoffice --headless --convert-to pdf "$f" --outdir output
+          done
+
+      - name: Generate HTML index
+        run: |
+          echo "<!DOCTYPE html><html><head><title>Slides</title></head><body><h1>Slides</h1><ul>" > output/index.html
+          for f in output/*.pdf; do
+            fname=$(basename "$f")
+            echo "<li><a href=\"$fname\">$fname</a></li>" >> output/index.html
+          done
+          echo "</ul></body></html>" >> output/index.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: output
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
