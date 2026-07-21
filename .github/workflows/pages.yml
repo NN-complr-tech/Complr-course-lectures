@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -44,12 +47,15 @@ jobs:
           echo "</ul></body></html>" >> output/index.html
 
       - name: Setup Pages
+        if: github.event_name == 'push'
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
+        if: github.event_name == 'push'
         uses: actions/upload-pages-artifact@v3
         with:
           path: output
 
       - name: Deploy to GitHub Pages
+        if: github.event_name == 'push'
         uses: actions/deploy-pages@v4
